@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Оценка продукции БЕТОН-30</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+				background: linear-gradient(135deg, #d1d8fa 0%, #ecddfa 100%);
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 20px;
+			}
+
+			.container {
+				background: white;
+				border-radius: 15px;
+				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+				overflow: hidden;
+				width: 100%;
+				max-width: 600px;
+				min-height: 500px;
+			}
+
+			.header {
+				background: linear-gradient(45deg, #2c3e50, #34495e);
+				color: white;
+				padding: 30px;
+				text-align: center;
+			}
+
+			.header h1 {
+				font-size: 2.2em;
+				margin-bottom: 10px;
+			}
+
+			.header p {
+				opacity: 0.9;
+				font-size: 1.1em;
+			}
+
+			.content {
+				padding: 40px;
+			}
+
+			.step {
+				display: none;
+			}
+
+			.step.active {
+				display: block;
+				animation: fadeIn 0.5s ease-in;
+			}
+
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+					transform: translateY(20px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.form-group {
+				margin-bottom: 25px;
+			}
+
+			label {
+				display: block;
+				margin-bottom: 8px;
+				font-weight: 600;
+				color: #2c3e50;
+				font-size: 1.1em;
+			}
+
+			input[type='text'],
+			input[type='tel'],
+			select,
+			textarea {
+				width: 100%;
+				padding: 15px;
+				border: 2px solid #e9ecef;
+				border-radius: 8px;
+				font-size: 1em;
+				transition: border-color 0.3s, box-shadow 0.3s;
+			}
+
+			input[type='text']:focus,
+			input[type='tel']:focus,
+			select:focus,
+			textarea:focus {
+				outline: none;
+				border-color: #667eea;
+				box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+			}
+
+			textarea {
+				resize: vertical;
+				min-height: 100px;
+			}
+
+			.btn {
+				background: linear-gradient(45deg, #667eea, #764ba2);
+				color: white;
+				border: none;
+				padding: 15px 30px;
+				border-radius: 8px;
+				font-size: 1.1em;
+				font-weight: 600;
+				cursor: pointer;
+				transition: transform 0.2s, box-shadow 0.2s;
+				width: 100%;
+			}
+
+			.btn:hover:not(:disabled) {
+				transform: translateY(-2px);
+				box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+			}
+
+			.btn:active {
+				transform: translateY(0);
+			}
+
+			.btn:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+				transform: none;
+			}
+
+			.question-card {
+				background: #f8f9fa;
+				border-radius: 10px;
+				padding: 25px;
+				margin-bottom: 20px;
+				border-left: 4px solid #667eea;
+			}
+
+			.question-title {
+				font-size: 1.2em;
+				font-weight: 600;
+				color: #2c3e50;
+				margin-bottom: 15px;
+			}
+
+			.rating-options {
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+			}
+
+			.rating-btn {
+				width: 50px;
+				height: 50px;
+				border: 2px solid #e9ecef;
+				background: white;
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-weight: bold;
+				cursor: pointer;
+				transition: all 0.3s;
+			}
+
+			.rating-btn:hover {
+				border-color: #667eea;
+				background: #f8f9ff;
+			}
+
+			.rating-btn.selected {
+				background: #667eea;
+				color: white;
+				border-color: #667eea;
+			}
+
+			.choice-options {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+
+			.choice-btn {
+				padding: 15px;
+				border: 2px solid #e9ecef;
+				background: white;
+				border-radius: 8px;
+				text-align: left;
+				cursor: pointer;
+				transition: all 0.3s;
+			}
+
+			.choice-btn:hover {
+				border-color: #667eea;
+				background: #f8f9ff;
+			}
+
+			.choice-btn.selected {
+				background: #667eea;
+				color: white;
+				border-color: #667eea;
+			}
+
+			.progress {
+				background: #e9ecef;
+				height: 8px;
+				border-radius: 4px;
+				overflow: hidden;
+				margin-bottom: 30px;
+			}
+
+			.progress-bar {
+				height: 100%;
+				background: linear-gradient(45deg, #c9d2fc, #e0c9f8);
+				transition: width 0.5s ease;
+			}
+
+			.navigation {
+				display: flex;
+				justify-content: space-between;
+				margin-top: 30px;
+				gap: 15px;
+			}
+
+			.btn-secondary {
+				background: #6c757d;
+				width: auto;
+				padding: 12px 25px;
+				flex: 0 0 auto;
+			}
+
+			.btn-secondary:hover:not(:disabled) {
+				box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+			}
+
+			.success-message {
+				text-align: center;
+				padding: 40px;
+			}
+
+			.success-icon {
+				font-size: 4em;
+				color: #28a745;
+				margin-bottom: 20px;
+			}
+
+			.download-btn {
+				background: #28a745;
+				margin-top: 20px;
+			}
+
+			.download-btn:hover:not(:disabled) {
+				box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+			}
+
+			.error {
+				color: #dc3545;
+				font-size: 0.9em;
+				margin-top: 5px;
+				display: none;
+			}
+
+			.loading {
+				text-align: center;
+				padding: 20px;
+				color: #6c757d;
+			}
+
+			.spinner {
+				border: 3px solid #f3f3f3;
+				border-top: 3px solid #667eea;
+				border-radius: 50%;
+				width: 30px;
+				height: 30px;
+				animation: spin 1s linear infinite;
+				margin: 0 auto 15px;
+			}
+
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+
+			@media (max-width: 768px) {
+				.container {
+					width: 95%;
+					margin: 10px;
+				}
+
+				.content {
+					padding: 20px;
+				}
+
+				.rating-options {
+					justify-content: center;
+				}
+
+				.navigation {
+					flex-direction: column;
+				}
+
+				.btn-secondary {
+					width: 100%;
+					order: 2;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1>ЮГ-БЕТОН</h1>
+				<p>Система оценки качества продукции и услуг</p>
+			</div>
+
+			<div class="content">
+				<!-- Step 1: Authentication -->
+				<div id="step1" class="step active">
+					<h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50">
+						Авторизация
+					</h2>
+					<form id="authForm">
+						<div class="form-group">
+							<label for="username">Имя пользователя *</label>
+							<input type="text" id="username" name="username" required />
+							<div class="error" id="usernameError">
+								Введите имя пользователя
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="phone">Номер телефона *</label>
+							<input
+								type="tel"
+								id="phone"
+								name="phone"
+								placeholder="+7 (XXX) XXX-XX-XX"
+								required
+							/>
+							<div class="error" id="phoneError">
+								Введите корректный номер телефона
+							</div>
+						</div>
+
+						<button type="submit" class="btn" id="authBtn">Войти</button>
+					</form>
+				</div>
+
+				<!-- Step 2: Product Selection -->
+				<div id="step2" class="step">
+					<h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50">
+						Выбор продукции
+					</h2>
+					<div class="form-group">
+						<label for="productSelect">Какую продукцию вы приобретали? *</label>
+						<select id="productSelect" required>
+							<option value="">Выберите продукцию...</option>
+						</select>
+						<div class="error" id="productError">Выберите продукцию</div>
+					</div>
+
+					<div class="navigation">
+						<button
+							type="button"
+							class="btn btn-secondary"
+							onclick="previousStep()"
+						>
+							Назад
+						</button>
+						<button type="button" class="btn" onclick="nextStep()">
+							Далее
+						</button>
+					</div>
+				</div>
+
+				<!-- Step 3: Questionnaire -->
+				<div id="step3" class="step">
+					<h2 style="text-align: center; margin-bottom: 20px; color: #2c3e50">
+						Оценка продукции
+					</h2>
+					<div class="progress">
+						<div class="progress-bar" id="progressBar" style="width: 0%"></div>
+					</div>
+
+					<div id="questionnaire"></div>
+
+					<div class="navigation">
+						<button
+							type="button"
+							class="btn btn-secondary"
+							onclick="previousStep()"
+						>
+							Назад
+						</button>
+						<button
+							type="button"
+							class="btn"
+							id="submitBtn"
+							onclick="submitEvaluation()"
+							disabled
+						>
+							Отправить оценку
+						</button>
+					</div>
+				</div>
+
+				<!-- Step 4: Success -->
+				<div id="step4" class="step">
+					<div class="success-message">
+						<div class="success-icon">✅</div>
+						<h2 style="color: #28a745; margin-bottom: 20px">
+							Спасибо за оценку!
+						</h2>
+						<p style="margin-bottom: 30px; color: #6c757d">
+							Ваша оценка успешно сохранена. Нажмите кнопку ниже, чтобы скачать
+							отчет.
+						</p>
+						<button
+							type="button"
+							class="btn download-btn"
+							onclick="downloadReport()"
+						>
+							Скачать отчет
+						</button>
+						<button
+							type="button"
+							class="btn"
+							onclick="startOver()"
+							style="margin-top: 15px; background: #6c757d"
+						>
+							Оценить другой продукт
+						</button>
+					</div>
+				</div>
+
+				<!-- Loading Step -->
+				<div id="loading" class="step">
+					<div class="loading">
+						<div class="spinner"></div>
+						<p>Обработка данных...</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			let currentStep = 1
+			let currentUser = null
+			let products = []
+			let questions = []
+			let responses = {}
+			let reportData = ''
+
+			// Initialize
+			document.addEventListener('DOMContentLoaded', function () {
+				console.log('🚀 App initialized')
+				loadProducts()
+				loadQuestions()
+				setupEventListeners()
+			})
+
+			function setupEventListeners() {
+				document
+					.getElementById('authForm')
+					.addEventListener('submit', handleAuth)
+				document.getElementById('phone').addEventListener('input', formatPhone)
+			}
+
+			function formatPhone(e) {
+				let value = e.target.value.replace(/\D/g, '')
+				if (value.length > 0) {
+					if (value.startsWith('8')) value = '7' + value.substring(1)
+					if (!value.startsWith('7')) value = '7' + value
+
+					let formatted = '+7'
+					if (value.length > 1) formatted += ' (' + value.substring(1, 4)
+					if (value.length > 4) formatted += ') ' + value.substring(4, 7)
+					if (value.length > 7) formatted += '-' + value.substring(7, 9)
+					if (value.length > 9) formatted += '-' + value.substring(9, 11)
+
+					e.target.value = formatted.substring(0, 18)
+				}
+			}
+
+			async function loadProducts() {
+				try {
+					console.log('📦 Loading products...')
+					const response = await fetch('/api/products')
+					const data = await response.json()
+
+					if (data.success) {
+						products = data.products
+						const select = document.getElementById('productSelect')
+						products.forEach(product => {
+							const option = document.createElement('option')
+							option.value = product
+							option.textContent = product
+							select.appendChild(option)
+						})
+						console.log('✅ Products loaded:', products.length)
+					} else {
+						throw new Error(data.error || 'Failed to load products')
+					}
+				} catch (error) {
+					console.error('❌ Error loading products:', error)
+					showNotification('Ошибка загрузки продукции', 'error')
+				}
+			}
+
+			async function loadQuestions() {
+				try {
+					console.log('❓ Loading questions...')
+					const response = await fetch('/api/questions')
+					const data = await response.json()
+
+					if (data.success) {
+						questions = data.questions
+						console.log('✅ Questions loaded:', questions.length)
+					} else {
+						throw new Error(data.error || 'Failed to load questions')
+					}
+				} catch (error) {
+					console.error('❌ Error loading questions:', error)
+					showNotification('Ошибка загрузки вопросов', 'error')
+				}
+			}
+
+			async function handleAuth(e) {
+				e.preventDefault()
+				const username = document.getElementById('username').value.trim()
+				const phone = document.getElementById('phone').value.trim()
+				const authBtn = document.getElementById('authBtn')
+
+				// Validation
+				let hasErrors = false
+				if (!username) {
+					showError('username', true)
+					hasErrors = true
+				} else {
+					showError('username', false)
+				}
+
+				if (!phone || phone.length < 10) {
+					showError('phone', true)
+					hasErrors = true
+				} else {
+					showError('phone', false)
+				}
+
+				if (hasErrors) return
+
+				// Send request
+				authBtn.disabled = true
+				authBtn.textContent = 'Подключение...'
+
+				try {
+					console.log('🔐 Authenticating user...')
+					const response = await fetch('/api/auth', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ username, phone }),
+					})
+
+					const result = await response.json()
+					if (result.success) {
+						currentUser = result.userId
+						console.log('✅ User authenticated:', currentUser)
+						showNotification(result.message, 'success')
+						setTimeout(() => nextStep(), 1000)
+					} else {
+						throw new Error(result.error || 'Authentication failed')
+					}
+				} catch (error) {
+					console.error('❌ Auth error:', error)
+					showNotification('Ошибка авторизации: ' + error.message, 'error')
+				} finally {
+					authBtn.disabled = false
+					authBtn.textContent = 'Войти'
+				}
+			}
+
+			function showError(fieldName, show) {
+				const errorElement = document.getElementById(fieldName + 'Error')
+				if (errorElement) {
+					errorElement.style.display = show ? 'block' : 'none'
+				}
+			}
+
+			function showNotification(message, type = 'info') {
+				// Simple notification - you can enhance this
+				const notification = document.createElement('div')
+				notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                background: ${
+									type === 'success'
+										? '#28a745'
+										: type === 'error'
+										? '#dc3545'
+										: '#17a2b8'
+								};
+                animation: slideIn 0.3s ease;
+            `
+				notification.textContent = message
+				document.body.appendChild(notification)
+
+				setTimeout(() => {
+					notification.remove()
+				}, 5000)
+			}
+
+			function nextStep() {
+				if (currentStep === 2) {
+					const selectedProduct = document.getElementById('productSelect').value
+					if (!selectedProduct) {
+						showError('product', true)
+						return
+					}
+					showError('product', false)
+					renderQuestionnaire()
+				}
+
+				document.getElementById(`step${currentStep}`).classList.remove('active')
+				currentStep++
+				document.getElementById(`step${currentStep}`).classList.add('active')
+			}
+
+			function previousStep() {
+				document.getElementById(`step${currentStep}`).classList.remove('active')
+				currentStep--
+				document.getElementById(`step${currentStep}`).classList.add('active')
+			}
+
+			function renderQuestionnaire() {
+				const container = document.getElementById('questionnaire')
+				container.innerHTML = ''
+
+				questions.forEach((question, index) => {
+					const questionDiv = document.createElement('div')
+					questionDiv.className = 'question-card'
+					questionDiv.innerHTML = `
+                    <div class="question-title">${question.question}</div>
+                    <div id="question_${question.id}_options"></div>
+                `
+					container.appendChild(questionDiv)
+
+					renderQuestionOptions(question)
+				})
+
+				updateProgress()
+			}
+
+			function renderQuestionOptions(question) {
+				const optionsContainer = document.getElementById(
+					`question_${question.id}_options`
+				)
+
+				if (question.type === 'rating') {
+					optionsContainer.className = 'rating-options'
+					question.options.forEach(option => {
+						const btn = document.createElement('button')
+						btn.className = 'rating-btn'
+						btn.textContent = option
+						btn.type = 'button'
+						btn.onclick = () => selectRating(question.id, option)
+						optionsContainer.appendChild(btn)
+					})
+				} else if (question.type === 'choice') {
+					optionsContainer.className = 'choice-options'
+					question.options.forEach(option => {
+						const btn = document.createElement('button')
+						btn.className = 'choice-btn'
+						btn.textContent = option
+						btn.type = 'button'
+						btn.onclick = () => selectChoice(question.id, option)
+						optionsContainer.appendChild(btn)
+					})
+				} else if (question.type === 'text') {
+					const textarea = document.createElement('textarea')
+					textarea.id = `question_${question.id}_text`
+					textarea.placeholder = 'Введите ваш ответ...'
+					textarea.onchange = () => selectText(question.id, textarea.value)
+					optionsContainer.appendChild(textarea)
+				}
+			}
+
+			function selectRating(questionId, rating) {
+				responses[`question_${questionId}`] = rating
+
+				const buttons = document.querySelectorAll(
+					`#question_${questionId}_options .rating-btn`
+				)
+				buttons.forEach(btn => {
+					btn.classList.remove('selected')
+					if (btn.textContent == rating) {
+						btn.classList.add('selected')
+					}
+				})
+
+				updateProgress()
+			}
+
+			function selectChoice(questionId, choice) {
+				responses[`question_${questionId}`] = choice
+
+				const buttons = document.querySelectorAll(
+					`#question_${questionId}_options .choice-btn`
+				)
+				buttons.forEach(btn => {
+					btn.classList.remove('selected')
+					if (btn.textContent === choice) {
+						btn.classList.add('selected')
+					}
+				})
+
+				updateProgress()
+			}
+
+			function selectText(questionId, text) {
+				responses[`question_${questionId}`] = text
+				updateProgress()
+			}
+
+			function updateProgress() {
+				const answeredQuestions = Object.keys(responses).length
+				const progress = (answeredQuestions / questions.length) * 100
+				document.getElementById('progressBar').style.width = progress + '%'
+
+				const submitBtn = document.getElementById('submitBtn')
+				submitBtn.disabled = answeredQuestions < questions.length
+			}
+
+			async function submitEvaluation() {
+				const selectedProduct = document.getElementById('productSelect').value
+				const ratingQuestions = questions.filter(q => q.type === 'rating')
+				const ratings = ratingQuestions.map(
+					q => responses[`question_${q.id}`] || 0
+				)
+				const overallRating = Math.round(
+					ratings.reduce((a, b) => a + b, 0) / ratings.length
+				)
+
+				try {
+					const response = await fetch('/api/evaluate', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							userId: currentUser,
+							productName: selectedProduct,
+							responses: responses,
+							overallRating: overallRating,
+						}),
+					})
+
+					const result = await response.json()
+					if (result.success) {
+						reportData = result.reportData
+						nextStep()
+					} else {
+						alert('Ошибка отправки оценки: ' + result.error)
+					}
+				} catch (error) {
+					alert('Ошибка подключения к серверу')
+				}
+			}
+
+			function downloadReport() {
+				const blob = new Blob([reportData], {
+					type: 'text/plain;charset=utf-8',
+				})
+				const url = window.URL.createObjectURL(blob)
+				const a = document.createElement('a')
+				a.href = url
+				a.download = `evaluation_report_${
+					new Date().toISOString().split('T')[0]
+				}.txt`
+				document.body.appendChild(a)
+				a.click()
+				document.body.removeChild(a)
+				window.URL.revokeObjectURL(url)
+			}
+
+			function startOver() {
+				currentStep = 1
+				currentUser = null
+				responses = {}
+				currentQuestionIndex = 0
+				reportData = ''
+
+				document
+					.querySelectorAll('.step')
+					.forEach(step => step.classList.remove('active'))
+				document.getElementById('step1').classList.add('active')
+
+				document.getElementById('authForm').reset()
+				document.getElementById('productSelect').value = ''
+			}
+		</script>
+	</body>
+</html>
