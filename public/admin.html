@@ -141,6 +141,9 @@
 						return
 					}
 
+					// Сохраняем токен админа
+					localStorage.setItem('adminToken', adminPhone);
+
 					document.getElementById('loginBox').style.display = 'none'
 					document.getElementById('adminPanel').style.display = 'block'
 
