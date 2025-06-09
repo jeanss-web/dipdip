@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const { Sequelize, DataTypes } = require('sequelize')
 const path = require('path')
+const { Parser } = require('json2csv')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -49,53 +50,6 @@ const User = sequelize.define(
 		timestamps: true,
 	}
 )
-async function checkAdmin(req, res, next) {
-	// Get admin token from headers (case insensitive)
-	const adminToken = req.headers.admintoken || req.headers.adminToken
-	console.log('Headers received:', req.headers)
-	console.log('Admin token from headers:', adminToken)
-
-	if (!adminToken) {
-		console.log('No admin token provided in headers')
-		return res
-			.status(403)
-			.json({ success: false, error: 'No admin token provided' })
-	}
-
-	try {
-		// Clean phone number (remove all non-digits except +)
-		const cleanPhone = adminToken.replace(/[^\d+]/g, '')
-		console.log('Cleaned phone number:', cleanPhone)
-
-		const admin = await User.findOne({
-			where: { phone: cleanPhone, isAdmin: true },
-		})
-		
-		console.log('Admin search result:', admin ? {
-			id: admin.id,
-			username: admin.username,
-			phone: admin.phone,
-			isAdmin: admin.isAdmin
-		} : 'No admin found')
-
-		if (!admin) {
-			console.log('Invalid admin credentials - no matching admin found')
-			return res
-				.status(403)
-				.json({ success: false, error: 'Invalid admin credentials' })
-		}
-
-		req.admin = admin
-		next()
-		console.log('Admin check passed successfully')
-	} catch (error) {
-		console.error('Error in checkAdmin:', error)
-		res.status(500).json({
-			success: false,
-			error: 'Internal server error during admin check'
-		})
-	}
-}
 
 // Evaluation Model
 const Evaluation = sequelize.define(
@@ -575,6 +529,129 @@ app.delete('/api/admin/users/:id', checkAdmin, async (req, res) => {
         console.error('Admin delete user error:', error);
         res.status(500).json({ success: false, error: 'Failed to delete user' });
     }
+});
+
+// --- СТАТИСТИКА ---
+app.get('/api/admin/statistics', checkAdmin, async (req, res) => {
+    try {
+        // Количество пользователей
+        const usersCount = await User.count();
+        // Количество отзывов
+        const evalCount = await Evaluation.count();
+        // Количество админов
+        const adminsCount = await User.count({ where: { isAdmin: true } });
+        // Средние оценки по продуктам
+        const productsStats = await Promise.all(products.map(async (product) => {
+            const evals = await Evaluation.findAll({ where: { productName: product } });
+            const avg = evals.length ? (evals.reduce((sum, e) => sum + e.overallRating, 0) / evals.length).toFixed(2) : null;
+            return { product, count: evals.length, avgRating: avg };
+        }));
+        res.json({ success: true, usersCount, evalCount, adminsCount, productsStats });
+    } catch (error) {
+        console.error('Admin statistics error:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch statistics' });
+    }
+});
+
+// --- ЭКСПОРТ В CSV ---
+app.get('/api/admin/export/evaluations', checkAdmin, async (req, res) => {
+    try {
+        const evaluations = await Evaluation.findAll({ include: [{ model: User, attributes: ['username', 'phone'] }] });
+        const data = evaluations.map(e => ({
+            id: e.id,
+            username: e.User.username,
+            phone: e.User.phone,
+            product: e.productName,
+            overallRating: e.overallRating,
+            createdAt: e.createdAt
+        }));
+        const parser = new Parser();
+        const csv = parser.parse(data);
+        res.header('Content-Type', 'text/csv');
+        res.attachment('evaluations.csv');
+        res.send(csv);
+    } catch (error) {
+        console.error('Export evaluations error:', error);
+        res.status(500).json({ success: false, error: 'Failed to export evaluations' });
+    }
+});
+
+app.get('/api/admin/export/users', checkAdmin, async (req, res) => {
+    try {
+        const users = await User.findAll({ attributes: ['id', 'username', 'phone', 'isAdmin', 'createdAt'] });
+        const parser = new Parser();
+        const csv = parser.parse(users.map(u => u.toJSON()));
+        res.header('Content-Type', 'text/csv');
+        res.attachment('users.csv');
+        res.send(csv);
+    } catch (error) {
+        console.error('Export users error:', error);
+        res.status(500).json({ success: false, error: 'Failed to export users' });
+    }
+});
+
+// --- CRUD ПРОДУКТОВ ---
+app.get('/api/admin/products', checkAdmin, (req, res) => {
+    res.json({ success: true, products });
+});
+
+app.post('/api/admin/products', checkAdmin, (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ success: false, error: 'Product name required' });
+    if (products.includes(name)) return res.status(400).json({ success: false, error: 'Product already exists' });
+    products.push(name);
+    res.json({ success: true, products });
+});
+
+app.delete('/api/admin/products', checkAdmin, (req, res) => {
+    const { name } = req.body;
+    const idx = products.indexOf(name);
+    if (idx === -1) return res.status(404).json({ success: false, error: 'Product not found' });
+    products.splice(idx, 1);
+    res.json({ success: true, products });
+});
+
+app.put('/api/admin/products', checkAdmin, (req, res) => {
+    const { oldName, newName } = req.body;
+    const idx = products.indexOf(oldName);
+    if (idx === -1) return res.status(404).json({ success: false, error: 'Product not found' });
+    if (!newName) return res.status(400).json({ success: false, error: 'New product name required' });
+    products[idx] = newName;
+    res.json({ success: true, products });
+});
+
+// --- РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ ---
+app.put('/api/admin/users/:id', checkAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { username, phone } = req.body;
+        const user = await User.findByPk(id);
+        if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+        if (phone && phone !== user.phone) {
+            // Проверка на уникальность телефона
+            const exists = await User.findOne({ where: { phone } });
+            if (exists) return res.status(400).json({ success: false, error: 'Phone already in use' });
+        }
+        await user.update({ username: username || user.username, phone: phone || user.phone });
+        res.json({ success: true, user });
+    } catch (error) {
+        console.error('Edit user error:', error);
+        res.status(500).json({ success: false, error: 'Failed to edit user' });
+    }
+});
+
+// --- ЛОГИ ДЕЙСТВИЙ (минимально) ---
+let adminLogs = [];
+function logAdminAction(action, details, adminPhone) {
+    adminLogs.push({ action, details, adminPhone, time: new Date().toISOString() });
+    if (adminLogs.length > 1000) adminLogs.shift(); // ограничение размера
+}
+
+// Пример использования logAdminAction:
+// logAdminAction('delete_user', { userId: 1 }, '+79991234567');
+
+app.get('/api/admin/logs', checkAdmin, (req, res) => {
+    res.json({ success: true, logs: adminLogs });
 });
 
 // Error handling middleware

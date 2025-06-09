@@ -107,6 +107,32 @@
 					<!-- Пользователи будут подгружены сюда -->
 				</tbody>
 			</table>
+
+			<!-- Блок статистики -->
+			<div id="statsBox" style="background:#fff;padding:20px;margin-bottom:30px;border-radius:10px;box-shadow:0 0 10px #0001;max-width:900px;margin:auto;">
+				<h2>Статистика</h2>
+				<div id="statsContent">Загрузка...</div>
+			</div>
+
+			<!-- Кнопки экспорта -->
+			<div style="margin-bottom:30px;text-align:center;">
+				<button onclick="exportEvaluations()" class="action-btn download-btn">Скачать все отзывы (CSV)</button>
+				<button onclick="exportUsers()" class="action-btn download-btn">Скачать всех пользователей (CSV)</button>
+			</div>
+
+			<!-- Управление продуктами -->
+			<div id="productsBox" style="background:#fff;padding:20px;margin-bottom:30px;border-radius:10px;box-shadow:0 0 10px #0001;max-width:900px;margin:auto;">
+				<h2>Управление продуктами</h2>
+				<ul id="productsList"></ul>
+				<input type="text" id="newProductName" placeholder="Новый продукт" style="padding:5px;">
+				<button onclick="addProduct()">Добавить</button>
+			</div>
+
+			<!-- Логи действий -->
+			<div id="logsBox" style="background:#fff;padding:20px;margin-bottom:30px;border-radius:10px;box-shadow:0 0 10px #0001;max-width:900px;margin:auto;">
+				<h2>Логи действий</h2>
+				<ul id="logsList" style="max-height:200px;overflow:auto;"></ul>
+			</div>
 		</div>
 
 		<script>
@@ -244,6 +270,7 @@
 							<td>${new Date(user.createdAt).toLocaleString()}</td>
 							<td>
 								<button onclick="setAdmin('${user.phone}', ${!user.isAdmin})">${user.isAdmin ? 'Снять админа' : 'Назначить админом'}</button>
+								<button onclick="editUserPrompt(${user.id}, '${user.username}', '${user.phone}')">✏️</button>
 								<button onclick="deleteUser(${user.id})" style="color:red;">Удалить</button>
 							</td>
 						`;
@@ -281,8 +308,132 @@
 				loadUsers();
 			}
 
+			// --- СТАТИСТИКА ---
+			async function loadStats() {
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch('/api/admin/statistics', { headers: { 'adminToken': token } });
+				const data = await res.json();
+				if (data.success) {
+					let html = `<b>Пользователей:</b> ${data.usersCount} &nbsp; <b>Админов:</b> ${data.adminsCount} &nbsp; <b>Всего отзывов:</b> ${data.evalCount}<br><br>`;
+					html += '<table border="1" style="width:100%;margin-top:10px;"><tr><th>Продукт</th><th>Кол-во отзывов</th><th>Средняя оценка</th></tr>';
+					data.productsStats.forEach(p => {
+						html += `<tr><td>${p.product}</td><td>${p.count}</td><td>${p.avgRating ?? '-'}</td></tr>`;
+					});
+					html += '</table>';
+					document.getElementById('statsContent').innerHTML = html;
+				} else {
+					document.getElementById('statsContent').textContent = 'Ошибка загрузки статистики';
+				}
+			}
+
+			// --- ЭКСПОРТ ---
+			function exportEvaluations() {
+				const token = localStorage.getItem('adminToken');
+				window.open('/api/admin/export/evaluations?adminToken=' + encodeURIComponent(token), '_blank');
+			}
+			function exportUsers() {
+				const token = localStorage.getItem('adminToken');
+				window.open('/api/admin/export/users?adminToken=' + encodeURIComponent(token), '_blank');
+			}
+
+			// --- ПРОДУКТЫ ---
+			async function loadProducts() {
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch('/api/admin/products', { headers: { 'adminToken': token } });
+				const data = await res.json();
+				if (data.success) {
+					const ul = document.getElementById('productsList');
+					ul.innerHTML = '';
+					data.products.forEach(name => {
+						const li = document.createElement('li');
+						li.innerHTML = `<span>${name}</span> <button onclick="editProductPrompt('${name}')">✏️</button> <button onclick="deleteProduct('${name}')" style="color:red;">Удалить</button>`;
+						ul.appendChild(li);
+					});
+				}
+			}
+			async function addProduct() {
+				const name = document.getElementById('newProductName').value.trim();
+				if (!name) return alert('Введите название продукта');
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch('/api/admin/products', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', 'adminToken': token },
+					body: JSON.stringify({ name })
+				});
+				const data = await res.json();
+				if (data.success) {
+					document.getElementById('newProductName').value = '';
+					loadProducts();
+				} else {
+					alert(data.error);
+				}
+			}
+			async function deleteProduct(name) {
+				if (!confirm('Удалить продукт?')) return;
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch('/api/admin/products', {
+					method: 'DELETE',
+					headers: { 'Content-Type': 'application/json', 'adminToken': token },
+					body: JSON.stringify({ name })
+				});
+				const data = await res.json();
+				if (data.success) loadProducts(); else alert(data.error);
+			}
+			function editProductPrompt(oldName) {
+				const newName = prompt('Новое название продукта:', oldName);
+				if (!newName || newName === oldName) return;
+				editProduct(oldName, newName);
+			}
+			async function editProduct(oldName, newName) {
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch('/api/admin/products', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json', 'adminToken': token },
+					body: JSON.stringify({ oldName, newName })
+				});
+				const data = await res.json();
+				if (data.success) loadProducts(); else alert(data.error);
+			}
+
+			// --- ЛОГИ ---
+			async function loadLogs() {
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch('/api/admin/logs', { headers: { 'adminToken': token } });
+				const data = await res.json();
+				if (data.success) {
+					const ul = document.getElementById('logsList');
+					ul.innerHTML = '';
+					data.logs.slice().reverse().forEach(log => {
+						const li = document.createElement('li');
+						li.textContent = `[${new Date(log.time).toLocaleString()}] ${log.adminPhone}: ${log.action} ${JSON.stringify(log.details)}`;
+						ul.appendChild(li);
+					});
+				}
+			}
+
+			// --- РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ ---
+			async function editUserPrompt(id, username, phone) {
+				const newUsername = prompt('Новое имя пользователя:', username);
+				const newPhone = prompt('Новый телефон:', phone);
+				if (!newUsername && !newPhone) return;
+				await editUser(id, newUsername, newPhone);
+			}
+			async function editUser(id, username, phone) {
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch(`/api/admin/users/${id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json', 'adminToken': token },
+					body: JSON.stringify({ username, phone })
+				});
+				const data = await res.json();
+				if (data.success) loadUsers(); else alert(data.error);
+			}
+
 			// При загрузке страницы подгружаем пользователей
 			window.addEventListener('DOMContentLoaded', () => {
+				loadStats();
+				loadProducts();
+				loadLogs();
 				loadUsers();
 			});
 		</script>
