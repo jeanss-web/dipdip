@@ -153,7 +153,53 @@ const questions = [
 		options: [],
 	},
 ]
+async function checkAdmin(req, res, next) {
+    // Get admin token from headers (case insensitive)
+    const adminToken = req.headers.admintoken || req.headers.adminToken;
+    console.log('Headers received:', req.headers);
+    console.log('Admin token from headers:', adminToken);
 
+    if (!adminToken) {
+        console.log('No admin token provided in headers');
+        return res
+            .status(403)
+            .json({ success: false, error: 'No admin token provided' });
+    }
+
+    try {
+        // Clean phone number (remove all non-digits except +)
+        const cleanPhone = adminToken.replace(/[^\d+]/g, '');
+        console.log('Cleaned phone number:', cleanPhone);
+
+        const admin = await User.findOne({
+            where: { phone: cleanPhone, isAdmin: true },
+        });
+
+        console.log('Admin search result:', admin ? {
+            id: admin.id,
+            username: admin.username,
+            phone: admin.phone,
+            isAdmin: admin.isAdmin
+        } : 'No admin found');
+
+        if (!admin) {
+            console.log('Invalid admin credentials - no matching admin found');
+            return res
+                .status(403)
+                .json({ success: false, error: 'Invalid admin credentials' });
+        }
+
+        req.admin = admin;
+        next();
+        console.log('Admin check passed successfully');
+    } catch (error) {
+        console.error('Error in checkAdmin:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error during admin check'
+        });
+    }
+}
 // Health check endpoint
 app.get('/health', (req, res) => {
 	res.json({ status: 'OK', timestamp: new Date().toISOString() })
@@ -692,5 +738,7 @@ async function startServer() {
 		process.exit(1)
 	}
 }
+
+
 
 startServer()
