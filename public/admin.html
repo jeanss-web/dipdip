@@ -89,6 +89,24 @@
 				</thead>
 				<tbody></tbody>
 			</table>
+
+			<!-- Таблица пользователей -->
+			<h2>Пользователи</h2>
+			<table id="users-table" border="1" style="margin-bottom: 30px;">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Имя</th>
+						<th>Телефон</th>
+						<th>Админ</th>
+						<th>Дата регистрации</th>
+						<th>Действия</th>
+					</tr>
+				</thead>
+				<tbody id="users-tbody">
+					<!-- Пользователи будут подгружены сюда -->
+				</tbody>
+			</table>
 		</div>
 
 		<script>
@@ -202,6 +220,68 @@
 					alert('Ошибка при скачивании отчета');
 				}
 			}
+
+			// Получить и отобразить пользователей
+			async function loadUsers() {
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch('/api/admin/users', {
+					headers: { 'adminToken': token }
+				});
+				const data = await res.json();
+				if (data.success) {
+					const tbody = document.getElementById('users-tbody');
+					tbody.innerHTML = '';
+					data.users.forEach(user => {
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td>${user.id}</td>
+							<td>${user.username}</td>
+							<td>${user.phone}</td>
+							<td>${user.isAdmin ? 'Да' : 'Нет'}</td>
+							<td>${new Date(user.createdAt).toLocaleString()}</td>
+							<td>
+								<button onclick="setAdmin('${user.phone}', ${!user.isAdmin})">${user.isAdmin ? 'Снять админа' : 'Назначить админом'}</button>
+								<button onclick="deleteUser(${user.id})" style="color:red;">Удалить</button>
+							</td>
+						`;
+						tbody.appendChild(tr);
+					});
+				}
+			}
+
+			// Назначить/снять админа
+			async function setAdmin(phone, isAdmin) {
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch('/api/admin/set-admin', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'adminToken': token
+					},
+					body: JSON.stringify({ phone, isAdmin })
+				});
+				const data = await res.json();
+				alert(data.message || data.error);
+				loadUsers();
+			}
+
+			// Удалить пользователя
+			async function deleteUser(id) {
+				if (!confirm('Удалить пользователя и все его отзывы?')) return;
+				const token = localStorage.getItem('adminToken');
+				const res = await fetch(`/api/admin/users/${id}`, {
+					method: 'DELETE',
+					headers: { 'adminToken': token }
+				});
+				const data = await res.json();
+				alert(data.message || data.error);
+				loadUsers();
+			}
+
+			// При загрузке страницы подгружаем пользователей
+			window.addEventListener('DOMContentLoaded', () => {
+				loadUsers();
+			});
 		</script>
 	</body>
 </html>

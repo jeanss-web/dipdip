@@ -527,6 +527,56 @@ app.get('/api/admin/evaluations/:id/report', checkAdmin, async (req, res) => {
     }
 });
 
+// Получить всех пользователей (только для админа)
+app.get('/api/admin/users', checkAdmin, async (req, res) => {
+    try {
+        const users = await User.findAll({
+            attributes: ['id', 'username', 'phone', 'isAdmin', 'createdAt']
+        });
+        res.json({ success: true, users });
+    } catch (error) {
+        console.error('Admin get users error:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch users' });
+    }
+});
+
+// Назначить или снять права администратора (только для админа)
+app.post('/api/admin/set-admin', checkAdmin, async (req, res) => {
+    try {
+        const { phone, isAdmin } = req.body;
+        if (!phone) {
+            return res.status(400).json({ success: false, error: 'Phone number is required' });
+        }
+        const user = await User.findOne({ where: { phone } });
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        await user.update({ isAdmin });
+        res.json({ success: true, message: `Admin status updated for user ${user.username}`, user: { id: user.id, username: user.username, phone: user.phone, isAdmin: user.isAdmin } });
+    } catch (error) {
+        console.error('Admin set admin error:', error);
+        res.status(500).json({ success: false, error: 'Failed to update admin status' });
+    }
+});
+
+// Удалить пользователя (только для админа)
+app.delete('/api/admin/users/:id', checkAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        // Удаляем все отзывы пользователя
+        await Evaluation.destroy({ where: { userId: id } });
+        await user.destroy();
+        res.json({ success: true, message: 'User and their evaluations deleted successfully' });
+    } catch (error) {
+        console.error('Admin delete user error:', error);
+        res.status(500).json({ success: false, error: 'Failed to delete user' });
+    }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
 	console.error('Unhandled error:', err)
