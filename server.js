@@ -465,7 +465,9 @@ app.post('/api/update-admin', async (req, res) => {
 app.delete('/api/admin/evaluations/:id', checkAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const evaluation = await Evaluation.findByPk(id);
+        const evaluation = await Evaluation.findByPk(id, {
+            include: [{ model: User, attributes: ['username'] }]
+        });
         
         if (!evaluation) {
             return res.status(404).json({
@@ -475,6 +477,11 @@ app.delete('/api/admin/evaluations/:id', checkAdmin, async (req, res) => {
         }
 
         await evaluation.destroy();
+        logAdminAction('delete_evaluation', { 
+            evaluationId: id, 
+            productName: evaluation.productName,
+            username: evaluation.User.username 
+        }, req.admin.phone);
         res.json({
             success: true,
             message: 'Evaluation deleted successfully'
@@ -484,45 +491,6 @@ app.delete('/api/admin/evaluations/:id', checkAdmin, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to delete evaluation'
-        });
-    }
-});
-
-// Download evaluation report
-app.get('/api/admin/evaluations/:id/report', checkAdmin, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const evaluation = await Evaluation.findOne({
-            where: { id },
-            include: [{ model: User, attributes: ['username', 'phone'] }]
-        });
-
-        if (!evaluation) {
-            return res.status(404).json({
-                success: false,
-                error: 'Evaluation not found'
-            });
-        }
-
-        const reportData = generateReportText({
-            user: {
-                username: evaluation.User.username,
-                phone: evaluation.User.phone,
-            },
-            product: evaluation.productName,
-            evaluation: evaluation.responses,
-            overallRating: evaluation.overallRating,
-            date: evaluation.createdAt,
-        });
-
-        res.setHeader('Content-Type', 'text/plain');
-        res.setHeader('Content-Disposition', `attachment; filename=evaluation-${id}.txt`);
-        res.send(reportData);
-    } catch (error) {
-        console.error('Error generating report:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to generate report'
         });
     }
 });
@@ -552,6 +520,7 @@ app.post('/api/admin/set-admin', checkAdmin, async (req, res) => {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
         await user.update({ isAdmin });
+        logAdminAction('update_admin_status', { userId: user.id, username: user.username, newStatus: isAdmin }, req.admin.phone);
         res.json({ success: true, message: `Admin status updated for user ${user.username}`, user: { id: user.id, username: user.username, phone: user.phone, isAdmin: user.isAdmin } });
     } catch (error) {
         console.error('Admin set admin error:', error);
@@ -570,6 +539,7 @@ app.delete('/api/admin/users/:id', checkAdmin, async (req, res) => {
         // Удаляем все отзывы пользователя
         await Evaluation.destroy({ where: { userId: id } });
         await user.destroy();
+        logAdminAction('delete_user', { userId: id, username: user.username }, req.admin.phone);
         res.json({ success: true, message: 'User and their evaluations deleted successfully' });
     } catch (error) {
         console.error('Admin delete user error:', error);
@@ -646,6 +616,7 @@ app.post('/api/admin/products', checkAdmin, (req, res) => {
     if (!name) return res.status(400).json({ success: false, error: 'Product name required' });
     if (products.includes(name)) return res.status(400).json({ success: false, error: 'Product already exists' });
     products.push(name);
+    logAdminAction('add_product', { productName: name }, req.admin.phone);
     res.json({ success: true, products });
 });
 
@@ -654,6 +625,7 @@ app.delete('/api/admin/products', checkAdmin, (req, res) => {
     const idx = products.indexOf(name);
     if (idx === -1) return res.status(404).json({ success: false, error: 'Product not found' });
     products.splice(idx, 1);
+    logAdminAction('delete_product', { productName: name }, req.admin.phone);
     res.json({ success: true, products });
 });
 
@@ -663,6 +635,7 @@ app.put('/api/admin/products', checkAdmin, (req, res) => {
     if (idx === -1) return res.status(404).json({ success: false, error: 'Product not found' });
     if (!newName) return res.status(400).json({ success: false, error: 'New product name required' });
     products[idx] = newName;
+    logAdminAction('update_product', { oldName, newName }, req.admin.phone);
     res.json({ success: true, products });
 });
 
@@ -678,7 +651,13 @@ app.put('/api/admin/users/:id', checkAdmin, async (req, res) => {
             const exists = await User.findOne({ where: { phone } });
             if (exists) return res.status(400).json({ success: false, error: 'Phone already in use' });
         }
+        const oldData = { username: user.username, phone: user.phone };
         await user.update({ username: username || user.username, phone: phone || user.phone });
+        logAdminAction('edit_user', { 
+            userId: id, 
+            oldData, 
+            newData: { username: user.username, phone: user.phone } 
+        }, req.admin.phone);
         res.json({ success: true, user });
     } catch (error) {
         console.error('Edit user error:', error);
@@ -738,7 +717,5 @@ async function startServer() {
 		process.exit(1)
 	}
 }
-
-
 
 startServer()
