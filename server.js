@@ -613,39 +613,50 @@ app.get('/api/admin/statistics', checkAdmin, async (req, res) => {
 // --- ЭКСПОРТ В CSV ---
 app.get('/api/admin/export/evaluations', checkAdmin, async (req, res) => {
 	try {
-		const evaluations = await Evaluation.findAll({ include: [{ model: User, attributes: ['username', 'phone'] }] });
+		const evaluations = await Evaluation.findAll({
+			include: [User],
+			order: [['createdAt', 'DESC']],
+		})
+
 		const data = evaluations.map(e => ({
-			id: e.id,
-			username: e.User.username,
-			phone: e.User.phone,
-			product: e.productName,
-			overallRating: e.overallRating,
-			createdAt: e.createdAt
-		}));
-		const parser = new Parser();
-		const csv = parser.parse(data);
-		res.header('Content-Type', 'text/csv');
-		res.attachment('evaluations.csv');
-		res.send(csv);
+			'ID': e.id,
+			'Пользователь': e.User.username,
+			'Телефон': e.User.phone,
+			'Продукт': e.productName,
+			'Оценка': e.overallRating,
+			'Ответы': JSON.stringify(e.responses),
+			'Дата': e.createdAt
+		}))
+
+		const fields = ['ID', 'Пользователь', 'Телефон', 'Продукт', 'Оценка', 'Ответы', 'Дата']
+		const parser = new Parser({ fields })
+		const csv = parser.parse(data)
+		res.header('Content-Type', 'text/csv')
+		res.attachment('evaluations.csv')
+		res.send(csv)
 	} catch (error) {
-		console.error('Export evaluations error:', error);
-		res.status(500).json({ success: false, error: 'Failed to export evaluations' });
+		console.error('Error exporting evaluations:', error)
+		res.status(500).json({ success: false, error: 'Error exporting evaluations' })
 	}
-});
+})
 
 app.get('/api/admin/export/users', checkAdmin, async (req, res) => {
 	try {
-		const users = await User.findAll({ attributes: ['id', 'username', 'phone', 'isAdmin', 'createdAt'] });
-		const parser = new Parser();
-		const csv = parser.parse(users.map(u => u.toJSON()));
-		res.header('Content-Type', 'text/csv');
-		res.attachment('users.csv');
-		res.send(csv);
+		const users = await User.findAll({
+			order: [['createdAt', 'DESC']],
+		})
+
+		const fields = ['id', 'username', 'phone', 'isAdmin', 'createdAt', 'updatedAt']
+		const parser = new Parser({ fields })
+		const csv = parser.parse(users.map(u => u.toJSON()))
+		res.header('Content-Type', 'text/csv')
+		res.attachment('users.csv')
+		res.send(csv)
 	} catch (error) {
-		console.error('Export users error:', error);
-		res.status(500).json({ success: false, error: 'Failed to export users' });
+		console.error('Error exporting users:', error)
+		res.status(500).json({ success: false, error: 'Error exporting users' })
 	}
-});
+})
 
 // --- CRUD ПРОДУКТОВ ---
 app.get('/api/admin/products', checkAdmin, (req, res) => {
