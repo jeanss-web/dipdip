@@ -1,0 +1,327 @@
+/* Admin Panel Styles */
+:root {
+    --primary-gradient: linear-gradient(45deg, #2c3e50, #34495e);
+    --button-gradient: linear-gradient(45deg, #667eea, #764ba2);
+    --border-color: #e9ecef;
+    --text-color: #2c3e50;
+    --light-bg: #f8f9fa;
+    --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #d1d8fa 0%, #ecddfa 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--text-color);
+}
+
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 30px;
+    text-align: center;
+    border-radius: 15px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+}
+
+.admin-header h1 {
+    font-size: 2.2em;
+    margin-bottom: 10px;
+}
+
+.admin-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    min-width: 150px;
+    text-align: center;
+    box-shadow: var(--card-shadow);
+}
+
+.stat-label {
+    color: var(--text-color);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+.stat-value {
+    font-size: 1.8em;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.admin-section {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+}
+
+.admin-section h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* Logs Styles */
+.logs-container {
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--light-bg);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.log-entry {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.log-time {
+    color: #667eea;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.log-action {
+    font-weight: 600;
+    margin: 10px 0;
+    color: var(--text-color);
+}
+
+.log-details {
+    color: #666;
+    font-family: 'Segoe UI', monospace;
+    font-size: 0.9em;
+    background: var(--light-bg);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+/* Users Styles */
+.user-item {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-username {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 1.1em;
+}
+
+.user-phone {
+    color: #666;
+}
+
+.admin-badge {
+    background: var(--button-gradient);
+    color: white;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.user-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Evaluations Styles */
+.evaluation-item {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.evaluation-info {
+    display: flex;
+    gap: 25px;
+}
+
+.evaluation-rating {
+    background: var(--button-gradient);
+    color: white;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* Products Styles */
+.product-item {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.add-product-form {
+    background: var(--light-bg);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 25px;
+    display: flex;
+    gap: 15px;
+}
+
+/* Button Styles */
+button {
+    background: var(--button-gradient);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button[onclick*="delete"] {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+}
+
+button[onclick*="edit"] {
+    background: var(--button-gradient);
+}
+
+button[onclick*="add"] {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+}
+
+/* Input Styles */
+input[type="text"] {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 10px;
+    }
+
+    .admin-header {
+        padding: 20px;
+    }
+
+    .admin-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .stat-item {
+        width: 100%;
+    }
+
+    .user-item, .evaluation-item, .product-item {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .user-actions, .evaluation-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .add-product-form {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
+} 
