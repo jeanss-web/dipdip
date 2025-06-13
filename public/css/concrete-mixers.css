@@ -1,0 +1,34 @@
+.concrete-mixers-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    overflow: hidden;
+}
+
+.concrete-mixer {
+    position: absolute;
+    width: 150px;
+    height: auto;
+    opacity: 0.6;
+    animation: float 15s infinite linear;
+}
+
+@keyframes float {
+    0% {
+        transform: translateX(-150px) translateY(100vh);
+    }
+    100% {
+        transform: translateX(calc(100vw + 150px)) translateY(-150px);
+    }
+}
+
+/* Different starting positions and speeds for mixers */
+.concrete-mixer:nth-child(1) { top: 10%; left: -150px; animation-duration: 20s; }
+.concrete-mixer:nth-child(2) { top: 30%; left: -150px; animation-duration: 25s; animation-delay: 5s; }
+.concrete-mixer:nth-child(3) { top: 50%; left: -150px; animation-duration: 22s; animation-delay: 2s; }
+.concrete-mixer:nth-child(4) { top: 70%; left: -150px; animation-duration: 18s; animation-delay: 7s; }
+.concrete-mixer:nth-child(5) { top: 90%; left: -150px; animation-duration: 23s; animation-delay: 3s; } 
