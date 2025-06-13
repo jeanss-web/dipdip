@@ -281,26 +281,39 @@
 				try {
 					const res = await fetch(`/api/admin/evaluations/${id}/report`, {
 						headers: {
-							'adminToken': adminPhone
+							'adminToken': adminPhone,
+							'Accept': 'text/plain, application/json'
 						}
 					});
 
 					if (!res.ok) {
-						throw new Error('Failed to download report');
+						const errorData = await res.json().catch(() => null);
+						throw new Error(errorData?.error || `Failed to download report: ${res.status} ${res.statusText}`);
+					}
+
+					// Get the content type from the response
+					const contentType = res.headers.get('content-type');
+					
+					if (contentType?.includes('application/json')) {
+						// If it's JSON, it might be an error message
+						const data = await res.json();
+						if (data.error) {
+							throw new Error(data.error);
+						}
 					}
 
 					const blob = await res.blob();
 					const url = window.URL.createObjectURL(blob);
 					const a = document.createElement('a');
 					a.href = url;
-					a.download = `evaluation-${id}.txt`;
+					a.download = `evaluation-${id}-${new Date().toISOString().split('T')[0]}.txt`;
 					document.body.appendChild(a);
 					a.click();
 					window.URL.revokeObjectURL(url);
 					document.body.removeChild(a);
 				} catch (err) {
 					console.error('Error downloading report:', err);
-					alert('Ошибка при скачивании отчета');
+					alert('Ошибка при скачивании отчета: ' + err.message);
 				}
 			}
 
