@@ -61,56 +61,6 @@
 		</style>
 	</head>
 	<body>
-		<div class="admin-container">
-			<header class="admin-header">
-				<h1>Админ-панель</h1>
-				<div class="admin-stats">
-					<div class="stat-item">
-						<span class="stat-label">Пользователей:</span>
-						<span id="users-count" class="stat-value">0</span>
-					</div>
-					<div class="stat-item">
-						<span class="stat-label">Оценок:</span>
-						<span id="evaluations-count" class="stat-value">0</span>
-					</div>
-				</div>
-			</header>
-
-			<main class="admin-content">
-				<section class="admin-section">
-					<h2>Последние действия</h2>
-					<div id="admin-logs" class="logs-container">
-						<!-- Logs will be added here dynamically -->
-					</div>
-				</section>
-
-				<section class="admin-section">
-					<h2>Пользователи</h2>
-					<div id="users-list" class="users-container">
-						<!-- Users will be added here dynamically -->
-					</div>
-				</section>
-
-				<section class="admin-section">
-					<h2>Оценки</h2>
-					<div id="evaluations-list" class="evaluations-container">
-						<!-- Evaluations will be added here dynamically -->
-					</div>
-				</section>
-
-				<section class="admin-section">
-					<h2>Продукты</h2>
-					<div id="products-list" class="products-container">
-						<!-- Products will be added here dynamically -->
-					</div>
-					<div class="add-product-form">
-						<input type="text" id="new-product-name" placeholder="Название продукта">
-						<button onclick="addProduct()">Добавить продукт</button>
-					</div>
-				</section>
-			</main>
-		</div>
-
 		<div class="login-box" id="loginBox">
 			<h2>Вход для администратора</h2>
 			<input
@@ -281,32 +231,19 @@
 				try {
 					const res = await fetch(`/api/admin/evaluations/${id}/report`, {
 						headers: {
-							'adminToken': adminPhone,
-							'Accept': 'text/plain, application/json'
+							'adminToken': adminPhone
 						}
 					});
 
 					if (!res.ok) {
-						const errorData = await res.json().catch(() => null);
-						throw new Error(errorData?.error || `Failed to download report: ${res.status} ${res.statusText}`);
-					}
-
-					// Get the content type from the response
-					const contentType = res.headers.get('content-type');
-					
-					if (contentType?.includes('application/json')) {
-						// If it's JSON, it might be an error message
-						const data = await res.json();
-						if (data.error) {
-							throw new Error(data.error);
-						}
+						throw new Error('Ошибка при скачивании отчета');
 					}
 
 					const blob = await res.blob();
 					const url = window.URL.createObjectURL(blob);
 					const a = document.createElement('a');
 					a.href = url;
-					a.download = `evaluation-${id}-${new Date().toISOString().split('T')[0]}.txt`;
+					a.download = `evaluation-${id}.txt`;
 					document.body.appendChild(a);
 					a.click();
 					window.URL.revokeObjectURL(url);

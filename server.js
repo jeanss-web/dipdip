@@ -754,6 +754,44 @@ app.get('/api/admin/logs', checkAdmin, (req, res) => {
 	res.json({ success: true, logs: adminLogs });
 });
 
+// Скачать отчет об оценке
+app.get('/api/admin/evaluations/:id/report', checkAdmin, async (req, res) => {
+	try {
+		const { id } = req.params;
+		const evaluation = await Evaluation.findByPk(id, {
+			include: [{ model: User, attributes: ['username', 'phone'] }]
+		});
+
+		if (!evaluation) {
+			return res.status(404).json({
+				success: false,
+				error: 'Оценка не найдена'
+			});
+		}
+
+		const reportText = generateReportText({
+			user: {
+				username: evaluation.User.username,
+				phone: evaluation.User.phone
+			},
+			product: evaluation.productName,
+			evaluation: evaluation.responses,
+			overallRating: evaluation.overallRating,
+			date: evaluation.createdAt
+		});
+
+		res.setHeader('Content-Type', 'text/plain');
+		res.setHeader('Content-Disposition', `attachment; filename=evaluation-${id}.txt`);
+		res.send(reportText);
+	} catch (error) {
+		console.error('Ошибка при генерации отчета:', error);
+		res.status(500).json({
+			success: false,
+			error: 'Не удалось сгенерировать отчет'
+		});
+	}
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
 	console.error('Unhandled error:', err)
