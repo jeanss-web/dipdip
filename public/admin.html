@@ -331,13 +331,56 @@
 			}
 
 			// --- ЭКСПОРТ ---
-			function exportEvaluations() {
-				const token = localStorage.getItem('adminToken');
-				window.open('/api/admin/export/evaluations?adminToken=' + encodeURIComponent(token), '_blank');
+			async function exportEvaluations() {
+				try {
+					const token = localStorage.getItem('adminToken');
+					const res = await fetch('/api/admin/export/evaluations', {
+						headers: { 'adminToken': token }
+					});
+
+					if (!res.ok) {
+						throw new Error('Ошибка при скачивании файла');
+					}
+
+					const blob = await res.blob();
+					const url = window.URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = `evaluations-${new Date().toISOString().split('T')[0]}.csv`;
+					document.body.appendChild(a);
+					a.click();
+					window.URL.revokeObjectURL(url);
+					document.body.removeChild(a);
+				} catch (err) {
+					console.error('Error exporting evaluations:', err);
+					alert('Ошибка при скачивании файла: ' + err.message);
+				}
 			}
-			function exportUsers() {
-				const token = localStorage.getItem('adminToken');
-				window.open('/api/admin/export/users?adminToken=' + encodeURIComponent(token), '_blank');
+
+			async function exportUsers() {
+				try {
+					const token = localStorage.getItem('adminToken');
+					const res = await fetch('/api/admin/export/users', {
+						headers: { 'adminToken': token }
+					});
+
+					if (!res.ok) {
+						throw new Error('Ошибка при скачивании файла');
+					}
+
+					const blob = await res.blob();
+					const url = window.URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = `users-${new Date().toISOString().split('T')[0]}.csv`;
+					document.body.appendChild(a);
+					a.click();
+					window.URL.revokeObjectURL(url);
+					document.body.removeChild(a);
+				} catch (err) {
+					console.error('Error exporting users:', err);
+					alert('Ошибка при скачивании файла: ' + err.message);
+				}
 			}
 
 			// --- ПРОДУКТЫ ---
