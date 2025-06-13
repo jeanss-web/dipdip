@@ -7,14 +7,17 @@
     z-index: -1;
     background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
     overflow: hidden;
+    pointer-events: none;
 }
 
 .concrete-mixer {
     position: absolute;
     width: 150px;
     height: auto;
-    opacity: 0.6;
+    opacity: 0.8;
     animation: float 15s infinite linear;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
 
 @keyframes float {
